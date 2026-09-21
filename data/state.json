@@ -1,8 +1,4 @@
 {
-  "cycles": {
-    "2026-10": {
-      "airlines": {}
-    }
-  },
+  "cycles": {},
   "schema_version": 1
 }

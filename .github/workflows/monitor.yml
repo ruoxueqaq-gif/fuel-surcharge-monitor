@@ -1,0 +1,58 @@
+name: NH/JL 燃油附加费监控
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 偶数月 20、25 日检查；时间为日本时间 09:20。
+    - cron: "20 9 20,25 2,4,6,8,10,12 *"
+      timezone: "Asia/Tokyo"
+    # 若仍未查到，则在下一奇数月 2 日补查。
+    - cron: "20 9 2 1,3,5,7,9,11 *"
+      timezone: "Asia/Tokyo"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: fuel-surcharge-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FORCE_CHECK: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: 检查 NH/JL 官方信息
+        run: python -m src.monitor
+
+      - name: 保存新增记录和轮次状态
+        run: |
+          git config user.name "fuel-surcharge-monitor[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data reports
+          if git diff --cached --quiet; then
+            echo "没有需要提交的变化"
+          else
+            git commit -m "data: 更新 NH/JL 燃油附加费记录"
+            git push
+          fi
+
+      - name: 新记录创建 Issue 通知
+        if: ${{ hashFiles('runtime/change.md') != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue create --title "NH/JL 燃油附加费发现新记录" --body-file runtime/change.md
+

@@ -1,0 +1,13 @@
+record_id,announced_at,effective_start,effective_end,route,amount_jpy,currency,unit,source_url
+da5e240ef968aec0,2026-08-18,2026-08-01,2026-08-31,日本－ソウル/釜山/済州/極東ロシア、沖縄－台北/高雄,7400,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+da5e240ef968aec0,2026-08-18,2026-08-01,2026-08-31,日本－東アジア（除く日本－ソウル/釜山/済州/ウランバートル、沖縄－台北/高雄）,16900,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+da5e240ef968aec0,2026-08-18,2026-08-01,2026-08-31,日本－グアム/パラオ/フィリピン/ベトナム/ウランバートル/ロシア*1,22500,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+da5e240ef968aec0,2026-08-18,2026-08-01,2026-08-31,日本－タイ/マレーシア/シンガポール/ブルネイ/ロシア*2,35000,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+da5e240ef968aec0,2026-08-18,2026-08-01,2026-08-31,日本－ハワイ/インドネシア/インド/スリランカ,40400,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+da5e240ef968aec0,2026-08-18,2026-08-01,2026-08-31,日本－北米/欧州*3/中東/オセアニア,65000,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+cfa1210e3350434c,2026-08-18,2026-09-01,2026-10-31,日本－ソウル/釜山/済州/極東ロシア、沖縄－台北/高雄,5900,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+cfa1210e3350434c,2026-08-18,2026-09-01,2026-10-31,日本－東アジア（除く日本－ソウル/釜山/済州/ウランバートル、沖縄－台北/高雄）,12400,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+cfa1210e3350434c,2026-08-18,2026-09-01,2026-10-31,日本－グアム/パラオ/フィリピン/ベトナム/ウランバートル/ロシア*1,17500,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+cfa1210e3350434c,2026-08-18,2026-09-01,2026-10-31,日本－タイ/マレーシア/シンガポール/ブルネイ/ロシア*2,26000,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+cfa1210e3350434c,2026-08-18,2026-09-01,2026-10-31,日本－ハワイ/インドネシア/インド/スリランカ,30900,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html
+cfa1210e3350434c,2026-08-18,2026-09-01,2026-10-31,日本－北米/欧州*3/中東/オセアニア,50000,JPY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html

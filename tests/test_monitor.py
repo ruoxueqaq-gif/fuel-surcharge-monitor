@@ -23,11 +23,9 @@ def test_html_parser_extracts_period_and_amounts():
     html = """
     <p>2026年10月18日更新</p>
     <h3>運賃額 2026年11月1日から2026年12月31日ご購入分まで</h3>
-    <table>
-      <tr><th>路線</th><th>日本円</th></tr>
-      <tr><td>日本-韓国</td><td>6,500</td></tr>
-      <tr><td>日本-東アジア（韓国を除く）</td><td>14,300円</td></tr>
-    </table>
+    <h4>旅行開始国が日本以外の場合</h4>
+    <p>中国大陸発日本行き旅程の中国大陸線はご購入地点にかかわらず以下のとおりです。</p>
+    <p>（2026年11月1日以降発券分）441中国元</p>
     """
     records = parse_html_periods(html, "NH", "https://example.test")
     assert len(records) == 1
@@ -35,22 +33,23 @@ def test_html_parser_extracts_period_and_amounts():
     assert records[0]["effective_start"] == "2026-11-01"
     assert records[0]["amounts"] == [
         {
-            "route": "中国大陆-日本",
-            "one_way_amount_jpy": 14300,
-            "round_trip_amount_jpy": 28600,
+            "route": "中国大陆-日本（中国大陆始发）",
+            "one_way_amount_cny": 441,
+            "round_trip_amount_cny": 882,
         }
     ]
 
 
-def test_markdown_parser_stops_before_insurance_table():
+def test_markdown_parser_extracts_jal_mainland_china_cny_amount():
     markdown = """
     2026年10月18日更新
     ### 2026年11月1日から12月31日発券分まで
 
-    | 区間 | 旅行開始国が日本の場合 |
+    | 区間 | 旅行開始国が日本以外の場合 |
     | --- | --- |
-    | 日本－韓国 | 6,500円 |
-    | 日本－東アジア（韓国を除く） | 12,400円 |
+    | 日本－東アジア（韓国を除く） | USD 68*2 |
+
+    *2 東アジア（除くソウル/釜山/済州/台北/高雄/香港/ウランバートル）発旅程はCNY482です。
 
     ## 航空保険特別料金
     | ご購入場所 | 適用額 |
@@ -62,8 +61,8 @@ def test_markdown_parser_stops_before_insurance_table():
     assert records[0]["effective_end"] == "2026-12-31"
     assert records[0]["amounts"] == [
         {
-            "route": "中国大陆-日本",
-            "one_way_amount_jpy": 12400,
-            "round_trip_amount_jpy": 24800,
+            "route": "中国大陆-日本（中国大陆始发）",
+            "one_way_amount_cny": 482,
+            "round_trip_amount_cny": 964,
         }
     ]

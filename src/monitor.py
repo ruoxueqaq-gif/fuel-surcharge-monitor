@@ -13,7 +13,7 @@ from typing import Iterable
 from urllib.parse import urljoin
 
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,11 +24,11 @@ CHANGE_FILE = ROOT / "runtime" / "change.md"
 
 SOURCES = {
     "NH": "https://www.ana.co.jp/ja/jp/guide/plan/charge/fuelsurcharge/",
-    "JL": "https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail.html",
+    "JL": "https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail_overseas.html",
 }
 
 AIRLINE_NAMES = {"NH": "ANA（全日空）", "JL": "JAL（日本航空）"}
-MONITORED_ROUTE = "中国大陆-日本"
+MONITORED_ROUTE = "中国大陆-日本（中国大陆始发）"
 DATE_RANGE_JA = re.compile(
     r"(20\d{2})年\s*(\d{1,2})月\s*(\d{1,2})日(?:から|～|〜|-|－)"
     r"\s*(?:(20\d{2})年\s*)?(\d{1,2})月\s*(\d{1,2})日"
@@ -119,24 +119,11 @@ def parse_html_periods(html: str, airline: str, source_url: str) -> list[dict]:
     announced = iso_date(updated_match.groups()) if updated_match else None
     records: list[dict] = []
 
-    for heading in soup.find_all(["h2", "h3"]):
-        heading_text = clean(heading.get_text(" ", strip=True))
-        period = DATE_RANGE_JA.search(heading_text)
-        if not period:
-            continue
-        table = heading.find_next("table")
-        if not isinstance(table, Tag):
-            continue
-        rows: list[dict] = []
-        for tr in table.find_all("tr"):
-            cells = [clean(cell.get_text(" ", strip=True)) for cell in tr.find_all(["th", "td"])]
-            if len(cells) < 2 or not re.search(r"\d", cells[-1]):
-                continue
-            amount_match = re.search(r"([\d,]+)", cells[-1])
-            if amount_match:
-                rows.append({"route": cells[0], "amount_jpy": int(amount_match.group(1).replace(",", ""))})
-        rows = select_mainland_china_route(rows)
-        if rows:
+    matches = list(DATE_RANGE_JA.finditer(page_text))
+    for index, period in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(page_text)
+        amount = extract_mainland_china_amount(page_text[period.end() : end], airline)
+        if amount is not None:
             effective_start, effective_end = range_dates(period)
             records.append(
                 make_record(
@@ -144,7 +131,7 @@ def parse_html_periods(html: str, airline: str, source_url: str) -> list[dict]:
                     announced_at=announced,
                     effective_start=effective_start,
                     effective_end=effective_end,
-                    amounts=rows,
+                    amounts=mainland_china_amounts(amount),
                     source_url=source_url,
                 )
             )
@@ -159,25 +146,8 @@ def parse_markdown_periods(markdown: str, airline: str, source_url: str) -> list
     for index, period in enumerate(matches):
         end = matches[index + 1].start() if index + 1 < len(matches) else len(markdown)
         section = markdown[period.end() : end]
-        rows: list[dict] = []
-        in_route_table = False
-        for line in section.splitlines():
-            if not line.strip().startswith("|"):
-                if in_route_table:
-                    break
-                continue
-            if not in_route_table:
-                if not any(word in line for word in ("区間", "路線", "Route")):
-                    continue
-                in_route_table = True
-            cells = [clean(cell) for cell in line.strip().strip("|").split("|")]
-            if len(cells) < 2 or set("".join(cells)) <= {"-", ":", " "}:
-                continue
-            amount_match = re.fullmatch(r"(?:JPY\s*)?([\d,]+)\s*(?:円|Yen)?", cells[-1], re.I)
-            if amount_match and any(word in cells[0] for word in ("日本", "Japan")):
-                rows.append({"route": cells[0], "amount_jpy": int(amount_match.group(1).replace(",", ""))})
-        rows = select_mainland_china_route(rows)
-        if rows:
+        amount = extract_mainland_china_amount(section, airline)
+        if amount is not None:
             effective_start, effective_end = range_dates(period)
             records.append(
                 make_record(
@@ -185,27 +155,42 @@ def parse_markdown_periods(markdown: str, airline: str, source_url: str) -> list
                     announced_at=announced,
                     effective_start=effective_start,
                     effective_end=effective_end,
-                    amounts=rows,
+                    amounts=mainland_china_amounts(amount),
                     source_url=source_url,
                 )
             )
     return records
 
 
-def select_mainland_china_route(amounts: list[dict]) -> list[dict]:
-    """Keep the East Asia price band that applies to mainland China."""
-    for amount in amounts:
-        route = clean(amount["route"])
-        if "東アジア" in route or "东亚" in route or "East Asia" in route:
-            one_way = int(amount["amount_jpy"])
-            return [
-                {
-                    "route": MONITORED_ROUTE,
-                    "one_way_amount_jpy": one_way,
-                    "round_trip_amount_jpy": one_way * 2,
-                }
-            ]
-    return []
+def extract_mainland_china_amount(text: str, airline: str) -> int | None:
+    """Extract the airline's CNY surcharge for itineraries originating in Mainland China."""
+    if airline == "NH":
+        route_match = re.search(
+            r"(?:中国大陸発日本行き旅程|Mainland China.*?Japan).*?"
+            r"(?:CNY\s*([\d,]+)|([\d,]+)\s*(?:中国元|Chinese yuan))",
+            text,
+            re.I,
+        )
+    else:
+        route_match = re.search(
+            r"(?:東アジア|东亚|East Asia).*?発旅程.*?CNY\s*([\d,]+)",
+            text,
+            re.I,
+        )
+    if not route_match:
+        return None
+    value = next(group for group in route_match.groups() if group is not None)
+    return int(value.replace(",", ""))
+
+
+def mainland_china_amounts(one_way: int) -> list[dict]:
+    return [
+        {
+            "route": MONITORED_ROUTE,
+            "one_way_amount_cny": one_way,
+            "round_trip_amount_cny": one_way * 2,
+        }
+    ]
 
 
 def make_record(
@@ -225,7 +210,7 @@ def make_record(
         "announced_at": announced_at,
         "effective_start": effective_start,
         "effective_end": effective_end,
-        "currency": "JPY",
+        "currency": "CNY",
         "unit": "每位旅客、每航段、单程",
         "amounts": amounts,
         "source_url": source_url,
@@ -256,12 +241,12 @@ def load_history() -> list[dict]:
                         "source_url": row["source_url"],
                     },
                 )
-                one_way = int(row.get("one_way_amount_jpy") or row["amount_jpy"])
+                one_way = int(row["one_way_amount_cny"])
                 record["amounts"].append(
                     {
                         "route": row["route"],
-                        "one_way_amount_jpy": one_way,
-                        "round_trip_amount_jpy": int(row.get("round_trip_amount_jpy") or one_way * 2),
+                        "one_way_amount_cny": one_way,
+                        "round_trip_amount_cny": int(row["round_trip_amount_cny"]),
                     }
                 )
         records.extend(grouped.values())
@@ -273,7 +258,7 @@ def append_history(records: list[dict]) -> None:
         return
     fieldnames = [
         "record_id", "announced_at", "effective_start", "effective_end",
-        "route", "one_way_amount_jpy", "round_trip_amount_jpy", "currency", "unit", "source_url",
+        "route", "one_way_amount_cny", "round_trip_amount_cny", "currency", "unit", "source_url",
     ]
     for airline, path in HISTORY_FILES.items():
         selected = [record for record in records if record["airline"] == airline]
@@ -294,8 +279,8 @@ def append_history(records: list[dict]) -> None:
                             "effective_start": record["effective_start"],
                             "effective_end": record["effective_end"],
                             "route": amount["route"],
-                            "one_way_amount_jpy": amount["one_way_amount_jpy"],
-                            "round_trip_amount_jpy": amount["round_trip_amount_jpy"],
+                            "one_way_amount_cny": amount["one_way_amount_cny"],
+                            "round_trip_amount_cny": amount["round_trip_amount_cny"],
                             "currency": record["currency"],
                             "unit": record["unit"],
                             "source_url": record["source_url"],
@@ -315,7 +300,7 @@ def save_state(state: dict) -> None:
 
 
 def render_report(history: list[dict]) -> str:
-    lines = ["# NH / JL 中国大陆-日本燃油附加费", "", "历史记录采用追加方式保存；下表显示每家航司已记录的最近一期。", ""]
+    lines = ["# NH / JL 中国大陆始发-日本燃油附加费", "", "历史记录采用追加方式保存；下表显示每家航司已记录的最近一期。", ""]
     for airline in ("NH", "JL"):
         records = [item for item in history if item["airline"] == airline]
         if not records:
@@ -335,7 +320,7 @@ def render_report(history: list[dict]) -> str:
         for row in latest["amounts"]:
             lines.append(
                 f"| {row['route'].replace('|', '/')} | "
-                f"¥{row['one_way_amount_jpy']:,} | ¥{row['round_trip_amount_jpy']:,} |"
+                f"CNY {row['one_way_amount_cny']:,} | CNY {row['round_trip_amount_cny']:,} |"
             )
         lines.extend(["", f"[官方来源]({latest['source_url']})", ""])
     return "\n".join(lines)
@@ -352,8 +337,8 @@ def render_change(records: list[dict], cycle: Cycle, errors: list[str]) -> str:
                 "| 航线 | 燃油单程价格 | 燃油往返价格 |",
                 "|---|---:|---:|",
                 *[
-                    f"| {amount['route']} | ¥{amount['one_way_amount_jpy']:,} | "
-                    f"¥{amount['round_trip_amount_jpy']:,} |"
+                    f"| {amount['route']} | CNY {amount['one_way_amount_cny']:,} | "
+                    f"CNY {amount['round_trip_amount_cny']:,} |"
                     for amount in record["amounts"]
                 ],
                 "",
@@ -394,7 +379,7 @@ def main() -> int:
             else:
                 found = parse_html_periods(body, airline, SOURCES[airline])
             if not found:
-                raise RuntimeError("未能从页面识别任何日元燃油附加费表格")
+                raise RuntimeError("未能从页面识别中国大陆始发行程的人民币燃油附加费")
             found = list({record["id"]: record for record in found}.values())
             unseen = [record for record in found if record["id"] not in known_ids]
             new_records.extend(unseen)

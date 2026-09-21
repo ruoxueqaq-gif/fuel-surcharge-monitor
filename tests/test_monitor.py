@@ -26,14 +26,20 @@ def test_html_parser_extracts_period_and_amounts():
     <table>
       <tr><th>路線</th><th>日本円</th></tr>
       <tr><td>日本-韓国</td><td>6,500</td></tr>
-      <tr><td>日本-北米</td><td>55,000円</td></tr>
+      <tr><td>日本-東アジア（韓国を除く）</td><td>14,300円</td></tr>
     </table>
     """
     records = parse_html_periods(html, "NH", "https://example.test")
     assert len(records) == 1
     assert records[0]["announced_at"] == "2026-10-18"
     assert records[0]["effective_start"] == "2026-11-01"
-    assert records[0]["amounts"][1]["amount_jpy"] == 55000
+    assert records[0]["amounts"] == [
+        {
+            "route": "中国大陆-日本",
+            "one_way_amount_jpy": 14300,
+            "round_trip_amount_jpy": 28600,
+        }
+    ]
 
 
 def test_markdown_parser_stops_before_insurance_table():
@@ -44,7 +50,7 @@ def test_markdown_parser_stops_before_insurance_table():
     | 区間 | 旅行開始国が日本の場合 |
     | --- | --- |
     | 日本－韓国 | 6,500円 |
-    | 日本－北米 | 55,000円 |
+    | 日本－東アジア（韓国を除く） | 12,400円 |
 
     ## 航空保険特別料金
     | ご購入場所 | 適用額 |
@@ -54,4 +60,10 @@ def test_markdown_parser_stops_before_insurance_table():
     records = parse_markdown_periods(markdown, "JL", "https://example.test")
     assert len(records) == 1
     assert records[0]["effective_end"] == "2026-12-31"
-    assert [row["amount_jpy"] for row in records[0]["amounts"]] == [6500, 55000]
+    assert records[0]["amounts"] == [
+        {
+            "route": "中国大陆-日本",
+            "one_way_amount_jpy": 12400,
+            "round_trip_amount_jpy": 24800,
+        }
+    ]

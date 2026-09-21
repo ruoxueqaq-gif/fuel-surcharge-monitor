@@ -1,7 +1,6 @@
 record_id,announced_at,effective_start,effective_end,route,one_way_amount_cny,round_trip_amount_cny,currency,unit,source_url
 53ca965facd162fe,2025-12-26,2026-01-01,2026-03-31,中国大陆-日本（中国大陆始发）,289,578,CNY,每位旅客、每航段、单程,https://web.archive.org/web/20260119184741/https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail_overseas.html
-b324a9cfb8417678,2026-04-24,2026-04-01,2026-04-30,中国大陆-日本（中国大陆始发）,289,578,CNY,每位旅客、每航段、单程,https://meiyacommonfile.oss-cn-shenzhen.aliyuncs.com/policy/content586b071776996058819.pdf
+b324a9cfb8417678,,2026-04-01,2026-04-30,中国大陆-日本（中国大陆始发）,289,578,CNY,每位旅客、每航段、单程,https://meiyacommonfile.oss-cn-shenzhen.aliyuncs.com/policy/content586b071776996058819.pdf
 90dd0a690fd90aef,2026-04-24,2026-05-01,2026-06-30,中国大陆-日本（中国大陆始发）,437,874,CNY,每位旅客、每航段、单程,https://meiyacommonfile.oss-cn-shenzhen.aliyuncs.com/policy/content586b071776996058819.pdf
 338823fc39789c02,2026-06-15,2026-07-01,2026-08-15,中国大陆-日本（中国大陆始发）,437,874,CNY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail_overseas.html
-5fc2bae68412ec44,2026-08-31,2026-08-16,2026-08-31,中国大陆-日本（中国大陆始发）,525,1050,CNY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail_overseas.html
-4fbeac71f51c0c2c,2026-09-15,2026-09-01,2026-10-31,中国大陆-日本（中国大陆始发）,525,1050,CNY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail_overseas.html
+4fbeac71f51c0c2c,,2026-09-01,2026-10-31,中国大陆-日本（中国大陆始发）,525,1050,CNY,每位旅客、每航段、单程,https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail_overseas.html

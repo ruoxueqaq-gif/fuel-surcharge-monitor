@@ -66,3 +66,17 @@ def test_markdown_parser_extracts_jal_mainland_china_cny_amount():
             "round_trip_amount_cny": 964,
         }
     ]
+
+
+def test_parser_ignores_date_ranges_outside_period_headings():
+    markdown = """
+    2026年9月15日更新
+    ### 2026年9月1日から10月31日発券分まで
+
+    東アジア発旅程はCNY525です。
+    フィリピン発旅程は2026年9月16日から9月30日発券分までUSD38です。
+    """
+    records = parse_markdown_periods(markdown, "JL", "https://example.test")
+    assert len(records) == 1
+    assert records[0]["effective_start"] == "2026-09-01"
+    assert records[0]["announced_at"] is None

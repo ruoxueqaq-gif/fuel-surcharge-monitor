@@ -34,6 +34,7 @@ DATE_RANGE_JA = re.compile(
     r"\s*(?:(20\d{2})年\s*)?(\d{1,2})月\s*(\d{1,2})日"
 )
 UPDATED_JA = re.compile(r"(20\d{2})年\s*(\d{1,2})月\s*(\d{1,2})日更新")
+MARKDOWN_HEADING = re.compile(r"(?m)^[ \t]*#{1,6}\s+(?P<title>[^\r\n]+)")
 
 
 @dataclass(frozen=True)
@@ -91,6 +92,13 @@ def range_dates(match: re.Match[str]) -> tuple[str, str]:
     )
 
 
+def announced_for_period(updated_at: str | None, effective_start: str) -> str | None:
+    """Use a page update as the announcement date only when it precedes the period."""
+    if updated_at is None or updated_at > effective_start:
+        return None
+    return updated_at
+
+
 def fetch(url: str) -> tuple[str, str]:
     """Fetch an official page, falling back to a text mirror on bot blocking."""
     headers = {
@@ -116,19 +124,31 @@ def parse_html_periods(html: str, airline: str, source_url: str) -> list[dict]:
     soup = BeautifulSoup(html, "html.parser")
     page_text = clean(soup.get_text(" ", strip=True))
     updated_match = UPDATED_JA.search(page_text)
-    announced = iso_date(updated_match.groups()) if updated_match else None
+    updated_at = iso_date(updated_match.groups()) if updated_match else None
     records: list[dict] = []
 
-    matches = list(DATE_RANGE_JA.finditer(page_text))
-    for index, period in enumerate(matches):
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(page_text)
-        amount = extract_mainland_china_amount(page_text[period.end() : end], airline)
+    periods: list[tuple[re.Match[str], int, int]] = []
+    cursor = 0
+    for heading in soup.find_all(re.compile(r"^h[1-6]$")):
+        heading_text = clean(heading.get_text(" ", strip=True))
+        period = DATE_RANGE_JA.search(heading_text)
+        if period is None:
+            continue
+        start = page_text.find(heading_text, cursor)
+        if start == -1:
+            continue
+        cursor = start + len(heading_text)
+        periods.append((period, start, cursor))
+
+    for index, (period, _, section_start) in enumerate(periods):
+        end = periods[index + 1][1] if index + 1 < len(periods) else len(page_text)
+        amount = extract_mainland_china_amount(page_text[section_start:end], airline)
         if amount is not None:
             effective_start, effective_end = range_dates(period)
             records.append(
                 make_record(
                     airline=airline,
-                    announced_at=announced,
+                    announced_at=announced_for_period(updated_at, effective_start),
                     effective_start=effective_start,
                     effective_end=effective_end,
                     amounts=mainland_china_amounts(amount),
@@ -140,19 +160,23 @@ def parse_html_periods(html: str, airline: str, source_url: str) -> list[dict]:
 
 def parse_markdown_periods(markdown: str, airline: str, source_url: str) -> list[dict]:
     updated_match = UPDATED_JA.search(markdown)
-    announced = iso_date(updated_match.groups()) if updated_match else None
-    matches = list(DATE_RANGE_JA.finditer(markdown))
+    updated_at = iso_date(updated_match.groups()) if updated_match else None
+    periods: list[tuple[re.Match[str], int, int]] = []
+    for heading in MARKDOWN_HEADING.finditer(markdown):
+        period = DATE_RANGE_JA.search(heading.group("title"))
+        if period is not None:
+            periods.append((period, heading.start(), heading.end()))
     records: list[dict] = []
-    for index, period in enumerate(matches):
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(markdown)
-        section = markdown[period.end() : end]
+    for index, (period, _, section_start) in enumerate(periods):
+        end = periods[index + 1][1] if index + 1 < len(periods) else len(markdown)
+        section = markdown[section_start:end]
         amount = extract_mainland_china_amount(section, airline)
         if amount is not None:
             effective_start, effective_end = range_dates(period)
             records.append(
                 make_record(
                     airline=airline,
-                    announced_at=announced,
+                    announced_at=announced_for_period(updated_at, effective_start),
                     effective_start=effective_start,
                     effective_end=effective_end,
                     amounts=mainland_china_amounts(amount),

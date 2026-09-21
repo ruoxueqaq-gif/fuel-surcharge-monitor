@@ -1,6 +1,6 @@
 record_id,announced_at,effective_start,effective_end,route,one_way_amount_cny,round_trip_amount_cny,currency,unit,source_url
 886850aa66d3517b,2025-09-01,2026-01-01,2026-03-31,中国大陆-日本（中国大陆始发）,245,490,CNY,每位旅客、每航段、单程,https://meiyacommonfile.oss-cn-shenzhen.aliyuncs.com/policy/contentd5c97e1756705565106.pdf
 4d6c26b7d4ddfb67,2026-03-31,2026-04-01,2026-04-30,中国大陆-日本（中国大陆始发）,275,550,CNY,每位旅客、每航段、单程,https://meiyacommonfile.oss-cn-shenzhen.aliyuncs.com/policy/contentf517851774927240887.pdf
-055ea05fa452ad8b,2026-09-16,2026-05-01,2026-06-30,中国大陆-日本（中国大陆始发）,441,882,CNY,每位旅客、每航段、单程,https://www.ana.co.jp/ja/jp/guide/plan/charge/fuelsurcharge/
-ec05d64cdff909cf,2026-09-16,2026-07-01,2026-08-31,中国大陆-日本（中国大陆始发）,441,882,CNY,每位旅客、每航段、单程,https://www.ana.co.jp/ja/jp/guide/plan/charge/fuelsurcharge/
-11598370c021566b,2026-09-16,2026-09-01,2026-10-31,中国大陆-日本（中国大陆始发）,441,882,CNY,每位旅客、每航段、单程,https://www.ana.co.jp/ja/jp/guide/plan/charge/fuelsurcharge/
+055ea05fa452ad8b,,2026-05-01,2026-06-30,中国大陆-日本（中国大陆始发）,441,882,CNY,每位旅客、每航段、单程,https://www.ana.co.jp/ja/jp/guide/plan/charge/fuelsurcharge/
+ec05d64cdff909cf,,2026-07-01,2026-08-31,中国大陆-日本（中国大陆始发）,441,882,CNY,每位旅客、每航段、单程,https://www.ana.co.jp/ja/jp/guide/plan/charge/fuelsurcharge/
+11598370c021566b,,2026-09-01,2026-10-31,中国大陆-日本（中国大陆始发）,441,882,CNY,每位旅客、每航段、单程,https://www.ana.co.jp/ja/jp/guide/plan/charge/fuelsurcharge/

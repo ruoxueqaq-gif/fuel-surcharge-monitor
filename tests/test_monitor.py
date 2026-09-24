@@ -133,12 +133,13 @@ def test_history_csv_omits_unit_and_source_and_tracks_change(tmp_path, monkeypat
         reader = csv.DictReader(stream)
         rows = list(reader)
     assert reader.fieldnames == [
-        "record_id", "announced_at", "effective_start", "effective_end", "route",
-        "one_way_amount_cny", "round_trip_amount_cny", "currency", "change_vs_previous_cny",
+        "记录编号", "公布日期", "适用开始日期", "适用结束日期", "航线",
+        "单程燃油附加费（人民币）", "往返燃油附加费（人民币）", "币种", "较上周期涨跌（人民币）",
     ]
-    assert [row["change_vs_previous_cny"] for row in rows] == ["", "", "+55", "-20"]
-    assert "unit" not in reader.fieldnames
-    assert "source_url" not in reader.fieldnames
+    assert [row["较上周期涨跌（人民币）"] for row in rows] == ["", "", "+55", "-20"]
+    assert all("_" not in name for name in reader.fieldnames)
+    assert "单位" not in reader.fieldnames
+    assert "官方来源链接" not in reader.fieldnames
 
     loaded = load_history()
     assert loaded[0]["unit"] == "每位旅客、每航段、单程"

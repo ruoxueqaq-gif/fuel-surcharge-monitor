@@ -29,6 +29,21 @@ SOURCES = {
 
 AIRLINE_NAMES = {"NH": "ANA（全日空）", "JL": "JAL（日本航空）"}
 MONITORED_ROUTE = "中国大陆-日本（中国大陆始发）"
+HISTORY_FIELDS = (
+    "record_id", "announced_at", "effective_start", "effective_end", "route",
+    "one_way_amount_cny", "round_trip_amount_cny", "currency", "change_vs_previous_cny",
+)
+HISTORY_HEADERS = {
+    "record_id": "记录编号",
+    "announced_at": "公布日期",
+    "effective_start": "适用开始日期",
+    "effective_end": "适用结束日期",
+    "route": "航线",
+    "one_way_amount_cny": "单程燃油附加费（人民币）",
+    "round_trip_amount_cny": "往返燃油附加费（人民币）",
+    "currency": "币种",
+    "change_vs_previous_cny": "较上周期涨跌（人民币）",
+}
 DATE_RANGE_JA = re.compile(
     r"(20\d{2})年\s*(\d{1,2})月\s*(\d{1,2})日(?:から|～|〜|-|－)"
     r"\s*(?:(20\d{2})年\s*)?(\d{1,2})月\s*(\d{1,2})日"
@@ -241,6 +256,10 @@ def make_record(
     }
 
 
+def _history_value(row: dict[str, str], key: str) -> str:
+    return row.get(HISTORY_HEADERS[key], row.get(key, ""))
+
+
 def load_history() -> list[dict]:
     records: list[dict] = []
     for airline, path in HISTORY_FILES.items():
@@ -249,41 +268,38 @@ def load_history() -> list[dict]:
         grouped: dict[str, dict] = {}
         with path.open("r", encoding="utf-8-sig", newline="") as stream:
             for row in csv.DictReader(stream):
-                record_id = row["record_id"]
+                record_id = _history_value(row, "record_id")
                 record = grouped.setdefault(
                     record_id,
                     {
                         "id": record_id,
                         "airline": airline,
                         "airline_name": AIRLINE_NAMES[airline],
-                        "announced_at": row["announced_at"] or None,
-                        "effective_start": row["effective_start"],
-                        "effective_end": row["effective_end"],
-                        "currency": row.get("currency") or "CNY",
+                        "announced_at": _history_value(row, "announced_at") or None,
+                        "effective_start": _history_value(row, "effective_start"),
+                        "effective_end": _history_value(row, "effective_end"),
+                        "currency": _history_value(row, "currency") or "CNY",
                         "unit": "每位旅客、每航段、单程",
                         "amounts": [],
                         "source_url": SOURCES[airline],
                     },
                 )
-                one_way = int(row["one_way_amount_cny"])
+                one_way = int(_history_value(row, "one_way_amount_cny"))
                 record["amounts"].append(
                     {
-                        "route": row["route"],
+                        "route": _history_value(row, "route"),
                         "one_way_amount_cny": one_way,
-                        "round_trip_amount_cny": int(row["round_trip_amount_cny"]),
+                        "round_trip_amount_cny": int(_history_value(row, "round_trip_amount_cny")),
                     }
                 )
         records.extend(grouped.values())
     return records
 
+
 def append_history(records: list[dict]) -> None:
     if not records:
         return
-    fieldnames = [
-        "record_id", "announced_at", "effective_start", "effective_end",
-        "route", "one_way_amount_cny", "round_trip_amount_cny", "currency",
-        "change_vs_previous_cny",
-    ]
+    fieldnames = [HISTORY_HEADERS[field] for field in HISTORY_FIELDS]
     for airline, path in HISTORY_FILES.items():
         selected = sorted(
             (record for record in records if record["airline"] == airline),
@@ -295,8 +311,8 @@ def append_history(records: list[dict]) -> None:
         if path.exists() and path.stat().st_size:
             with path.open("r", encoding="utf-8-sig", newline="") as stream:
                 for row in csv.DictReader(stream):
-                    route = row.get("route", "")
-                    amount = row.get("one_way_amount_cny", "")
+                    route = _history_value(row, "route")
+                    amount = _history_value(row, "one_way_amount_cny")
                     if route and amount:
                         previous_by_route[route] = int(amount)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -311,19 +327,18 @@ def append_history(records: list[dict]) -> None:
                     current = int(amount["one_way_amount_cny"])
                     previous = previous_by_route.get(route)
                     change = "" if previous is None or current == previous else f"{current - previous:+d}"
-                    writer.writerow(
-                        {
-                            "record_id": record["id"],
-                            "announced_at": record["announced_at"] or "",
-                            "effective_start": record["effective_start"],
-                            "effective_end": record["effective_end"],
-                            "route": route,
-                            "one_way_amount_cny": current,
-                            "round_trip_amount_cny": amount["round_trip_amount_cny"],
-                            "currency": record["currency"],
-                            "change_vs_previous_cny": change,
-                        }
-                    )
+                    output = {
+                        "record_id": record["id"],
+                        "announced_at": record["announced_at"] or "",
+                        "effective_start": record["effective_start"],
+                        "effective_end": record["effective_end"],
+                        "route": route,
+                        "one_way_amount_cny": current,
+                        "round_trip_amount_cny": amount["round_trip_amount_cny"],
+                        "currency": record["currency"],
+                        "change_vs_previous_cny": change,
+                    }
+                    writer.writerow({HISTORY_HEADERS[key]: value for key, value in output.items()})
                     previous_by_route[route] = current
 
 def load_state() -> dict:

@@ -1,4 +1,4 @@
-﻿record_id,announced_at,effective_start,effective_end,route,one_way_amount_cny,round_trip_amount_cny,currency,change_vs_previous_cny
+﻿记录编号,公布日期,适用开始日期,适用结束日期,航线,单程燃油附加费（人民币）,往返燃油附加费（人民币）,币种,较上周期涨跌（人民币）
 53ca965facd162fe,2025-12-26,2026-01-01,2026-03-31,中国大陆-日本（中国大陆始发）,289,578,CNY,
 b324a9cfb8417678,,2026-04-01,2026-04-30,中国大陆-日本（中国大陆始发）,289,578,CNY,
 90dd0a690fd90aef,2026-04-24,2026-05-01,2026-06-30,中国大陆-日本（中国大陆始发）,437,874,CNY,+148

@@ -27,13 +27,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
 
-      - run: pip install -r requirements.txt
+      - name: 安装依赖
+        run: python -m pip install -r requirements.txt pytest
+
+      - name: 运行测试
+        run: python -m pytest -q
 
       - name: 检查 NH/JL 官方信息
         run: python -m src.monitor
@@ -47,7 +53,8 @@ jobs:
             echo "没有需要提交的变化"
           else
             git commit -m "data: 更新 NH/JL 燃油附加费记录"
-            git push
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
       - name: 新记录创建 Issue 通知
@@ -55,4 +62,3 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh issue create --title "NH/JL 燃油附加费发现新记录" --body-file runtime/change.md
-

@@ -1,9 +1,13 @@
+import csv
 from datetime import date
 
+import src.monitor as monitor
 from src.monitor import (
     Cycle,
+    append_history,
     cycle_for_day,
     is_candidate_day,
+    load_history,
     parse_html_periods,
     parse_markdown_periods,
 )
@@ -80,3 +84,62 @@ def test_parser_ignores_date_ranges_outside_period_headings():
     assert len(records) == 1
     assert records[0]["effective_start"] == "2026-09-01"
     assert records[0]["announced_at"] is None
+
+
+def test_history_csv_omits_unit_and_source_and_tracks_change(tmp_path, monkeypatch):
+    nh = tmp_path / "NH.csv"
+    jl = tmp_path / "JL.csv"
+    monkeypatch.setattr(monitor, "HISTORY_FILES", {"NH": nh, "JL": jl})
+
+    base = {
+        "airline": "NH",
+        "airline_name": "ANA（全日空）",
+        "announced_at": "2026-01-01",
+        "effective_start": "2026-01-01",
+        "effective_end": "2026-02-28",
+        "currency": "CNY",
+        "unit": "每位旅客、每航段、单程",
+        "source_url": "https://example.test",
+    }
+    first = {
+        **base,
+        "id": "a",
+        "amounts": [{"route": "中国大陆-日本（中国大陆始发）", "one_way_amount_cny": 245, "round_trip_amount_cny": 490}],
+    }
+    same = {
+        **base,
+        "id": "b",
+        "effective_start": "2026-03-01",
+        "effective_end": "2026-04-30",
+        "amounts": [{"route": "中国大陆-日本（中国大陆始发）", "one_way_amount_cny": 245, "round_trip_amount_cny": 490}],
+    }
+    higher = {
+        **base,
+        "id": "c",
+        "effective_start": "2026-05-01",
+        "effective_end": "2026-06-30",
+        "amounts": [{"route": "中国大陆-日本（中国大陆始发）", "one_way_amount_cny": 300, "round_trip_amount_cny": 600}],
+    }
+    lower = {
+        **base,
+        "id": "d",
+        "effective_start": "2026-07-01",
+        "effective_end": "2026-08-31",
+        "amounts": [{"route": "中国大陆-日本（中国大陆始发）", "one_way_amount_cny": 280, "round_trip_amount_cny": 560}],
+    }
+
+    append_history([first, same, higher, lower])
+    with nh.open(encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream)
+        rows = list(reader)
+    assert reader.fieldnames == [
+        "record_id", "announced_at", "effective_start", "effective_end", "route",
+        "one_way_amount_cny", "round_trip_amount_cny", "currency", "change_vs_previous_cny",
+    ]
+    assert [row["change_vs_previous_cny"] for row in rows] == ["", "", "+55", "-20"]
+    assert "unit" not in reader.fieldnames
+    assert "source_url" not in reader.fieldnames
+
+    loaded = load_history()
+    assert loaded[0]["unit"] == "每位旅客、每航段、单程"
+    assert loaded[0]["source_url"] == monitor.SOURCES["NH"]

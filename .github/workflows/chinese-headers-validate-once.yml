@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: 更新生成逻辑、测试与正式定时工作流
+      - name: 更新 CSV 生成逻辑与测试
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -157,13 +157,6 @@ jobs:
           new = '''    assert reader.fieldnames == [\n        "记录编号", "公布日期", "适用开始日期", "适用结束日期", "航线",\n        "单程燃油附加费（人民币）", "往返燃油附加费（人民币）", "币种", "较上周期涨跌（人民币）",\n    ]\n    assert [row["较上周期涨跌（人民币）"] for row in rows] == ["", "", "+55", "-20"]\n    assert all("_" not in name for name in reader.fieldnames)\n    assert "单位" not in reader.fieldnames\n    assert "官方来源链接" not in reader.fieldnames\n'''
           assert old in tests
           test_path.write_text(tests.replace(old, new, 1), encoding="utf-8")
-
-          workflow_path = Path(".github/workflows/monitor.yml")
-          workflow = workflow_path.read_text(encoding="utf-8")
-          old_install = '      - run: pip install -r requirements.txt\n\n      - name: 检查 NH/JL 官方信息\n'
-          new_install = '      - name: 安装依赖\n        run: python -m pip install -r requirements.txt pytest\n\n      - name: 运行测试\n        run: python -m pytest -q\n\n      - name: 检查 NH/JL 官方信息\n'
-          assert old_install in workflow
-          workflow_path.write_text(workflow.replace(old_install, new_install, 1), encoding="utf-8")
           PY
 
       - name: 将现有 NH/JL 历史 CSV 改为中文表头
@@ -189,9 +182,7 @@ jobs:
                   rows = list(csv.DictReader(handle))
               output = []
               for row in rows:
-                  converted = {}
-                  for old, new in fields:
-                      converted[new] = row.get(new, row.get(old, ""))
+                  converted = {new: row.get(new, row.get(old, "")) for old, new in fields}
                   output.append(converted)
               with path.open("w", encoding="utf-8-sig", newline="") as handle:
                   writer = csv.DictWriter(handle, fieldnames=[new for _, new in fields], lineterminator="\n")
@@ -204,14 +195,13 @@ jobs:
           python -m pip install -r requirements.txt pytest
           python -m pytest -q
 
-      - name: 验证线上定时工作流仍包含定时与手动触发
+      - name: 验证正式定时工作流仍可识别
         run: |
           python - <<'PY'
           from pathlib import Path
           text = Path(".github/workflows/monitor.yml").read_text(encoding="utf-8")
           assert "schedule:" in text
           assert "workflow_dispatch:" in text
-          assert "python -m pytest -q" in text
           assert 'timezone: "Asia/Tokyo"' in text
           PY
 
@@ -219,7 +209,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/monitor.py tests/test_monitor.py data/NH.csv data/JL.csv .github/workflows/monitor.yml
+          git add src/monitor.py tests/test_monitor.py data/NH.csv data/JL.csv
           git commit -m "refactor: 燃油附加费 CSV 使用中文表头"
           git pull --rebase origin main
           git push origin HEAD:main

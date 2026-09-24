@@ -173,7 +173,8 @@ jobs:
       - name: Install and test
         run: |
           pip install -r requirements.txt
-          pytest -q
+          pip install pytest
+          python -m pytest -q
       - name: Commit compact history
         run: |
           git config user.name "github-actions[bot]"

@@ -24,11 +24,13 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
+          from textwrap import dedent
 
           path = Path("src/monitor.py")
           text = path.read_text(encoding="utf-8")
 
-          load_history = '''def load_history() -> list[dict]:
+          load_history = dedent('''\
+          def load_history() -> list[dict]:
               records: list[dict] = []
               for airline, path in HISTORY_FILES.items():
                   if not path.exists() or path.stat().st_size == 0:
@@ -62,10 +64,10 @@ jobs:
                           )
                   records.extend(grouped.values())
               return records
-          '''
-          load_history = "\n".join(line[10:] if line.startswith("          ") else line for line in load_history.splitlines())
+          ''')
 
-          append_history = '''def append_history(records: list[dict]) -> None:
+          append_history = dedent('''\
+          def append_history(records: list[dict]) -> None:
               if not records:
                   return
               fieldnames = [
@@ -114,22 +116,22 @@ jobs:
                                   }
                               )
                               previous_by_route[route] = current
-          '''
-          append_history = "\n".join(line[10:] if line.startswith("          ") else line for line in append_history.splitlines())
+          ''')
 
           text, n1 = re.subn(
               r"def load_history\(\) -> list\[dict\]:\n.*?\n\ndef append_history",
-              load_history + "\n\ndef append_history",
+              load_history.rstrip() + "\n\ndef append_history",
               text,
               flags=re.S,
           )
           text, n2 = re.subn(
               r"def append_history\(records: list\[dict\]\) -> None:\n.*?\n\ndef load_state",
-              append_history + "\n\ndef load_state",
+              append_history.rstrip() + "\n\ndef load_state",
               text,
               flags=re.S,
           )
           assert (n1, n2) == (1, 1), (n1, n2)
+          compile(text, str(path), "exec")
           path.write_text(text, encoding="utf-8")
           PY
       - name: Rewrite existing NH and JL CSVs

@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HISTORY_FILES = {code: ROOT / "data" / f"{code}.csv" for code in ("NH", "JL")}
+HISTORY_FILES = {code: ROOT / "csv" / f"{code}.csv" for code in ("NH", "JL")}
 STATE_FILE = ROOT / "data" / "state.json"
 REPORT_FILE = ROOT / "reports" / "latest.md"
 CHANGE_FILE = ROOT / "runtime" / "change.md"

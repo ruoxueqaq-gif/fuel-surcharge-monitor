@@ -301,7 +301,7 @@ def load_history() -> list[dict]:
 def append_history(records: list[dict]) -> None:
     if not records:
         return
-    recorded_at = datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds")
+    recorded_at = datetime.now(timezone(timedelta(hours=8))).date().isoformat()
     fieldnames = [HISTORY_HEADERS[field] for field in HISTORY_FIELDS]
     for airline, path in HISTORY_FILES.items():
         selected = sorted(

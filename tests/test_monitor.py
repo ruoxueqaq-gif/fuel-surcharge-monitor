@@ -1,5 +1,5 @@
 import csv
-from datetime import date, datetime, timedelta
+from datetime import date
 
 import src.monitor as monitor
 from src.monitor import (
@@ -138,7 +138,7 @@ def test_history_csv_omits_unit_and_source_and_tracks_change(tmp_path, monkeypat
     ]
     assert [row["较上周期涨跌（人民币）"] for row in rows] == ["", "", "+55", "-20"]
     recorded_at = rows[0]["记录时间（北京时间）"]
-    assert datetime.fromisoformat(recorded_at).utcoffset() == timedelta(hours=8)
+    assert date.fromisoformat(recorded_at).isoformat() == recorded_at
     assert all(row["记录时间（北京时间）"] == recorded_at for row in rows)
     assert all("_" not in name for name in reader.fieldnames)
     assert "单位" not in reader.fieldnames

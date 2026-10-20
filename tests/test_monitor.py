@@ -1,5 +1,5 @@
 import csv
-from datetime import date
+from datetime import date, datetime, timedelta
 
 import src.monitor as monitor
 from src.monitor import (
@@ -133,14 +133,18 @@ def test_history_csv_omits_unit_and_source_and_tracks_change(tmp_path, monkeypat
         reader = csv.DictReader(stream)
         rows = list(reader)
     assert reader.fieldnames == [
-        "记录编号", "公布日期", "适用开始日期", "适用结束日期", "航线",
+        "记录编号", "记录时间（北京时间）", "公布日期", "适用开始日期", "适用结束日期", "航线",
         "单程燃油附加费（人民币）", "往返燃油附加费（人民币）", "币种", "较上周期涨跌（人民币）",
     ]
     assert [row["较上周期涨跌（人民币）"] for row in rows] == ["", "", "+55", "-20"]
+    recorded_at = rows[0]["记录时间（北京时间）"]
+    assert datetime.fromisoformat(recorded_at).utcoffset() == timedelta(hours=8)
+    assert all(row["记录时间（北京时间）"] == recorded_at for row in rows)
     assert all("_" not in name for name in reader.fieldnames)
     assert "单位" not in reader.fieldnames
     assert "官方来源链接" not in reader.fieldnames
 
     loaded = load_history()
+    assert loaded[0]["recorded_at"] == recorded_at
     assert loaded[0]["unit"] == "每位旅客、每航段、单程"
     assert loaded[0]["source_url"] == monitor.SOURCES["NH"]

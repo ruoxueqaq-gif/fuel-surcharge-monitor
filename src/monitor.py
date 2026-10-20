@@ -7,7 +7,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
 from urllib.parse import urljoin
@@ -30,11 +30,12 @@ SOURCES = {
 AIRLINE_NAMES = {"NH": "ANA（全日空）", "JL": "JAL（日本航空）"}
 MONITORED_ROUTE = "中国大陆-日本（中国大陆始发）"
 HISTORY_FIELDS = (
-    "record_id", "announced_at", "effective_start", "effective_end", "route",
+    "record_id", "recorded_at", "announced_at", "effective_start", "effective_end", "route",
     "one_way_amount_cny", "round_trip_amount_cny", "currency", "change_vs_previous_cny",
 )
 HISTORY_HEADERS = {
     "record_id": "记录编号",
+    "recorded_at": "记录时间（北京时间）",
     "announced_at": "公布日期",
     "effective_start": "适用开始日期",
     "effective_end": "适用结束日期",
@@ -273,6 +274,7 @@ def load_history() -> list[dict]:
                     record_id,
                     {
                         "id": record_id,
+                        "recorded_at": _history_value(row, "recorded_at") or None,
                         "airline": airline,
                         "airline_name": AIRLINE_NAMES[airline],
                         "announced_at": _history_value(row, "announced_at") or None,
@@ -299,6 +301,7 @@ def load_history() -> list[dict]:
 def append_history(records: list[dict]) -> None:
     if not records:
         return
+    recorded_at = datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds")
     fieldnames = [HISTORY_HEADERS[field] for field in HISTORY_FIELDS]
     for airline, path in HISTORY_FILES.items():
         selected = sorted(
@@ -322,6 +325,7 @@ def append_history(records: list[dict]) -> None:
             if needs_header:
                 writer.writeheader()
             for record in selected:
+                record["recorded_at"] = record.get("recorded_at") or recorded_at
                 for amount in record["amounts"]:
                     route = amount["route"]
                     current = int(amount["one_way_amount_cny"])
@@ -329,6 +333,7 @@ def append_history(records: list[dict]) -> None:
                     change = "" if previous is None or current == previous else f"{current - previous:+d}"
                     output = {
                         "record_id": record["id"],
+                        "recorded_at": record["recorded_at"],
                         "announced_at": record["announced_at"] or "",
                         "effective_start": record["effective_start"],
                         "effective_end": record["effective_end"],

@@ -1,7 +1,14 @@
 {
   "cycles": {
     "2026-10": {
-      "airlines": {}
+      "airlines": {
+        "NH": {
+          "fetch_mode": "official",
+          "found": true,
+          "found_at": "2026-10-20",
+          "record_id": "961542733b9485cf"
+        }
+      }
     }
   },
   "schema_version": 1

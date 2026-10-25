@@ -75,6 +75,10 @@ jobs:
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
+      - name: Refresh focus markers from saved data
+        if: ${{ always() && !cancelled() && inputs.dry_run != true && inputs.live_check != true }}
+        run: python scripts/update_focus.py
+
       - name: Refresh local monitor health
         if: ${{ always() && !cancelled() && inputs.dry_run != true && inputs.live_check != true }}
         env:

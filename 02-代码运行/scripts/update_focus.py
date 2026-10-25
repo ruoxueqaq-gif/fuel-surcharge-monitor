@@ -1,4 +1,11 @@
 from __future__ import annotations
+
+import sys as _layout_sys
+from pathlib import Path as _LayoutPath
+_layout_sys.path.insert(0, str(_LayoutPath(__file__).resolve().parents[1]))
+_layout_sys.path.insert(0, str(_LayoutPath(__file__).resolve().parents[1] / "src"))
+from src.layout import project_path
+
 from datetime import date, timedelta
 from pathlib import Path
 import sys
@@ -37,7 +44,7 @@ def mark_rows(rows, today):
 def build(root, today):
     result = {}
     for rank, airline in enumerate(('NH', 'JL'), 1):
-        headers, rows = read_table(root / f'csv/03_不常看/{airline}.csv')
+        headers, rows = read_table(project_path(root, f'csv/03_不常看/{airline}.csv'))
         result[f'csv/01_重点关注/0{rank}_{airline}.csv'] = table(['重点标记'] + headers, mark_rows(rows, today))
     return result
 

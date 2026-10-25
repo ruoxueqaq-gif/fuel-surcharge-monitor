@@ -1,5 +1,12 @@
 """Pure presentation helpers: no queries, notifications or changes to source tables."""
 from __future__ import annotations
+
+import sys as _layout_sys
+from pathlib import Path as _LayoutPath
+_layout_sys.path.insert(0, str(_LayoutPath(__file__).resolve().parents[1]))
+_layout_sys.path.insert(0, str(_LayoutPath(__file__).resolve().parents[1] / "src"))
+from src.layout import project_path
+
 import argparse
 import csv
 from datetime import date, datetime
@@ -48,7 +55,7 @@ def run(build, root):
     today = args.as_of or datetime.now(ZoneInfo('Asia/Shanghai')).date()
     changed = []
     for relative, content in build(root, today).items():
-        path = root / relative
+        path = project_path(root, relative)
         if not path.exists() or path.read_bytes() != content:
             changed.append(relative)
             if not args.check:

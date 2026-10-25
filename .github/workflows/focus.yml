@@ -6,12 +6,16 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["csv/**", "data/**", "config/**", "config.yaml", "preference_config.yaml", "scripts/**", "src/review_queue.py"]
+    paths: ["01-CSV/**", "02-代码运行/data/**", "02-代码运行/config/**", "02-代码运行/config.yaml", "02-代码运行/preference_config.yaml", "02-代码运行/scripts/**", "02-代码运行/src/review_queue.py"]
 permissions:
   contents: write
 concurrency:
   group: fuel-surcharge-monitor
   cancel-in-progress: false
+defaults:
+  run:
+    working-directory: 02-代码运行
+
 jobs:
   focus:
     runs-on: ubuntu-latest
@@ -28,7 +32,7 @@ jobs:
       - run: python scripts/update_focus.py
       - name: Save changed presentation files
         run: |
-          git add csv/
+          git add ../01-CSV/
           if git diff --cached --quiet; then
             echo "Focus markers unchanged"
             exit 0

@@ -1,3 +1,10 @@
+
+import sys as _layout_sys
+from pathlib import Path as _LayoutPath
+_layout_sys.path.insert(0, str(_LayoutPath(__file__).resolve().parents[1]))
+_layout_sys.path.insert(0, str(_LayoutPath(__file__).resolve().parents[1] / "src"))
+from src.layout import project_path
+
 import csv
 from datetime import date
 from io import StringIO
@@ -41,7 +48,7 @@ def test_effective_boundaries_next_period_and_revision_deduplication():
 def test_monitor_appends_to_archive_and_focus_rebuild_does_not_recreate_duplicates(tmp_path, monkeypatch):
     from src import monitor
     assert all(path.parent.name == '03_不常看' for path in monitor.HISTORY_FILES.values())
-    archives = {code: tmp_path / 'csv/03_不常看' / f'{code}.csv' for code in ('NH','JL')}
+    archives = {code: project_path(tmp_path, 'csv/03_不常看') / f'{code}.csv' for code in ('NH','JL')}
     monkeypatch.setattr(monitor,'HISTORY_FILES',archives)
 
     def record(code, identity, price):
@@ -56,7 +63,7 @@ def test_monitor_appends_to_archive_and_focus_rebuild_does_not_recreate_duplicat
             path=tmp_path/relative
             path.parent.mkdir(parents=True,exist_ok=True)
             path.write_bytes(content)
-    focused=tmp_path/'csv/01_重点关注'
+    focused=project_path(tmp_path, 'csv/01_重点关注')
     assert sorted(path.name for path in focused.iterdir()) == ['01_NH.csv','02_JL.csv']
     with (focused/'01_NH.csv').open(encoding='utf-8-sig',newline='') as handle:
         rows=list(csv.DictReader(handle))

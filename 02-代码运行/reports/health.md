@@ -12,5 +12,5 @@
 
 工作流执行、来源请求成功和有效结果是不同状态。页面生成时间不代表完成了实际查询；跳过查询时保留上次来源时间。
 
-[Actions运行记录](https://github.com/ruoxueqaq-gif/fuel-surcharge-monitor/actions) · [查询配置与说明](../README.md)
+[Actions运行记录](https://github.com/ruoxueqaq-gif/fuel-surcharge-monitor/actions) · [查询配置与说明](../../README.md)
 

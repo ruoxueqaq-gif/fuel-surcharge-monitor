@@ -1,5 +1,12 @@
 """Build a local status page; never query services or send notifications."""
 from __future__ import annotations
+
+import sys as _layout_sys
+from pathlib import Path as _LayoutPath
+_layout_sys.path.insert(0, str(_LayoutPath(__file__).resolve().parents[1]))
+_layout_sys.path.insert(0, str(_LayoutPath(__file__).resolve().parents[1] / "src"))
+from src.layout import project_path
+
 import csv
 import json
 import os
@@ -17,7 +24,7 @@ def read(path, default=None):
     return json.loads(p.read_text(encoding='utf-8-sig')) if p.exists() else ({} if default is None else default)
 
 def csv_rows(pattern):
-    for p in sorted(ROOT.glob(pattern)):
+    for p in sorted(project_path(ROOT, "csv").glob(pattern.removeprefix("csv/"))):
         with p.open(encoding='utf-8-sig', newline='') as handle:
             yield from csv.DictReader(handle)
 
@@ -83,7 +90,7 @@ def build_status(name, now):
             from src.monitor import schedule_min_hours
             interval = schedule_min_hours(cfg, now_date)
             if state.get('last_check_failed'): interval = min(interval or 6, 6)
-            status['valid_results'] = sum(1 for _ in csv_rows('csv/01_重点关注/my_verified_offers.csv')) if (ROOT/'csv/01_重点关注/my_verified_offers.csv').exists() else None
+            status['valid_results'] = sum(1 for _ in csv_rows('csv/01_重点关注/my_verified_offers.csv')) if (project_path(ROOT, 'csv/01_重点关注/my_verified_offers.csv')).exists() else None
             status['notes'].append('[公告覆盖与人工查询入口](source_coverage.md)；报价为空不等于无房。')
         else:
             from src.monitor import interval_hours
@@ -108,7 +115,7 @@ def build_status(name, now):
         if rows:
             status['last_run_record'] = rows[-1]
             status['last_data_check'] = status['last_data_check'] or rows[-1].get('检查时间', '')
-        status['notes'].append('[每日运行记录](../csv/03_不常看/my_run_log.csv) · [月度运行记录](../csv/04_月度排班/run_log.csv)')
+        status['notes'].append('[每日运行记录](../../01-CSV/03_不常看/my_run_log.csv) · [月度运行记录](../../01-CSV/04_月度排班/run_log.csv)')
         status['next_check'] = '北京时间每天约07:17；月度扩展查询按周一及每月1日执行'
     elif name == 'av-new-release-monitor':
         seen = read('data/seen.json')
@@ -122,7 +129,7 @@ def build_status(name, now):
     return status
 
 def main():
-    name = os.getenv('GITHUB_REPOSITORY', ROOT.name).split('/')[-1]
+    name = os.getenv('GITHUB_REPOSITORY', ROOT.parent.name if ROOT.name == '02-代码运行' else ROOT.name).split('/')[-1]
     now = datetime.now(timezone.utc).isoformat(timespec='seconds')
     status = build_status(name, now)
     target = ROOT/'reports/health.md'

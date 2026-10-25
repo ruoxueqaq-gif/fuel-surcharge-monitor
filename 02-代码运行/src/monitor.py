@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+try:
+    from src.layout import project_path
+except ModuleNotFoundError:
+    from layout import project_path
+
+
 import hashlib
 import csv
 import json
@@ -17,7 +23,7 @@ from bs4 import BeautifulSoup
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HISTORY_FILES = {code: ROOT / "csv" / "03_不常看" / f"{code}.csv" for code in ("NH", "JL")}
+HISTORY_FILES = {code: project_path(ROOT, "csv") / "03_不常看" / f"{code}.csv" for code in ("NH", "JL")}
 STATE_FILE = ROOT / "data" / "state.json"
 REPORT_FILE = ROOT / "reports" / "latest.md"
 CHANGE_FILE = ROOT / "runtime" / "change.md"

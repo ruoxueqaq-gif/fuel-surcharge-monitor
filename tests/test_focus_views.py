@@ -36,3 +36,30 @@ def test_effective_boundaries_next_period_and_revision_deduplication():
     assert output[2]['重点标记']=='🟨 当前生效'
     assert output[0]['重点标记']==output[3]['重点标记']==''
     assert not any(row['重点标记']=='🟨 当前生效' for row in focus.mark_rows(rows,date(2026,10,26)))
+
+
+def test_monitor_appends_to_archive_and_focus_rebuild_does_not_recreate_duplicates(tmp_path, monkeypatch):
+    from src import monitor
+    assert all(path.parent.name == '03_不常看' for path in monitor.HISTORY_FILES.values())
+    archives = {code: tmp_path / 'csv/03_不常看' / f'{code}.csv' for code in ('NH','JL')}
+    monkeypatch.setattr(monitor,'HISTORY_FILES',archives)
+
+    def record(code, identity, price):
+        return {'airline':code,'id':identity,'announced_at':'2026-10-20',
+                'effective_start':'2026-11-01','effective_end':'2026-12-31','currency':'CNY',
+                'amounts':[{'route':monitor.MONITORED_ROUTE,'one_way_amount_cny':price,'round_trip_amount_cny':price*2}]}
+
+    monitor.append_history([record('NH','first',300),record('JL','jal',400)])
+    monitor.append_history([record('NH','revision',350)])
+    for _ in range(2):
+        for relative, content in focus.build(tmp_path,TODAY).items():
+            path=tmp_path/relative
+            path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_bytes(content)
+    focused=tmp_path/'csv/01_重点关注'
+    assert sorted(path.name for path in focused.iterdir()) == ['01_NH.csv','02_JL.csv']
+    with (focused/'01_NH.csv').open(encoding='utf-8-sig',newline='') as handle:
+        rows=list(csv.DictReader(handle))
+    assert len(rows)==1 and rows[0]['单程燃油附加费（人民币）']=='350'
+    with archives['NH'].open(encoding='utf-8-sig',newline='') as handle:
+        assert len(list(csv.DictReader(handle)))==2

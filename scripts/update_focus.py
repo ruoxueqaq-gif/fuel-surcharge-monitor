@@ -37,7 +37,7 @@ def mark_rows(rows, today):
 def build(root, today):
     result = {}
     for rank, airline in enumerate(('NH', 'JL'), 1):
-        headers, rows = read_table(root / f'csv/01_重点关注/{airline}.csv')
+        headers, rows = read_table(root / f'csv/03_不常看/{airline}.csv')
         result[f'csv/01_重点关注/0{rank}_{airline}.csv'] = table(['重点标记'] + headers, mark_rows(rows, today))
     return result
 

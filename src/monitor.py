@@ -410,6 +410,7 @@ def render_change(records: list[dict], cycle: Cycle, errors: list[str]) -> str:
 
 
 def main() -> int:
+    from .notifications import enqueue
     today = date.fromisoformat(os.environ.get("MONITOR_DATE", date.today().isoformat()))
     force = os.environ.get("FORCE_CHECK", "").lower() in {"1", "true", "yes"}
     if not force and not is_candidate_day(today):
@@ -442,6 +443,7 @@ def main() -> int:
             unseen = [record for record in found if record["id"] not in known_ids]
             new_records.extend(unseen)
             known_ids.update(record["id"] for record in unseen)
+            state.setdefault("source_health", {})[airline] = {"status": "ok", "checked_at": today.isoformat(), "last_successful_fetch": today.isoformat()}
             target = [record for record in found if record["effective_start"] == cycle.target_start.isoformat()]
             if target:
                 cycle_state["airlines"][airline] = {
@@ -455,6 +457,9 @@ def main() -> int:
                 print(f"{airline}: 官网尚未出现 {cycle.target_start} 起生效的新一期记录。")
         except Exception as exc:
             message = f"{airline}: {exc}"
+            previous = state.setdefault("source_health", {}).get(airline, {})
+            state["source_health"][airline] = {"status": "error", "checked_at": today.isoformat(),
+                "last_successful_fetch": previous.get("last_successful_fetch", "")}
             errors.append(message)
             print(f"::warning::{message}")
 
@@ -468,7 +473,9 @@ def main() -> int:
 
     CHANGE_FILE.parent.mkdir(parents=True, exist_ok=True)
     if new_records:
-        CHANGE_FILE.write_text(render_change(new_records, cycle, errors), encoding="utf-8")
+        body = render_change(new_records, cycle, errors)
+        CHANGE_FILE.write_text(body, encoding="utf-8")
+        enqueue(STATE_FILE.parent / "notification_outbox.json", "NH/JL 燃油附加费发现新记录", body)
     elif CHANGE_FILE.exists():
         CHANGE_FILE.unlink()
 

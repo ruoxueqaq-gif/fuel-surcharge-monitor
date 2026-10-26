@@ -21,7 +21,7 @@ def mark_rows(rows, today):
     for row in rows:
         key = (row.get('适用开始日期'), row.get('适用结束日期'), row.get('航线'), row.get('币种'))
         previous = latest.get(key)
-        if previous is None or row.get('记录时间（北京时间）', '') >= previous.get('记录时间（北京时间）', ''):
+        if previous is None or row.get('记录时间', '') >= previous.get('记录时间', ''):
             latest[key] = dict(row)
     rows = list(latest.values())
     future = [day(row.get('适用开始日期')) for row in rows
@@ -38,7 +38,7 @@ def mark_rows(rows, today):
             elif start == next_start:
                 label = '🟦 下一期'
         row['重点标记'] = label
-    return sorted(rows, key=lambda row: (row.get('适用开始日期', ''), row.get('记录时间（北京时间）', '')), reverse=True)
+    return sorted(rows, key=lambda row: (row.get('适用开始日期', ''), row.get('记录时间', '')), reverse=True)
 
 
 def build(root, today):

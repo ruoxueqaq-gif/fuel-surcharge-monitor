@@ -41,15 +41,15 @@ HISTORY_FIELDS = (
 )
 HISTORY_HEADERS = {
     "record_id": "记录编号",
-    "recorded_at": "记录时间（北京时间）",
+    "recorded_at": "记录时间",
     "announced_at": "公布日期",
     "effective_start": "适用开始日期",
     "effective_end": "适用结束日期",
     "route": "航线",
-    "one_way_amount_cny": "单程燃油附加费（人民币）",
-    "round_trip_amount_cny": "往返燃油附加费（人民币）",
+    "one_way_amount_cny": "单程燃油附加费",
+    "round_trip_amount_cny": "往返燃油附加费",
     "currency": "币种",
-    "change_vs_previous_cny": "较上周期涨跌（人民币）",
+    "change_vs_previous_cny": "往返较上周期涨跌",
 }
 DATE_RANGE_JA = re.compile(
     r"(20\d{2})年\s*(\d{1,2})月\s*(\d{1,2})日(?:から|～|〜|-|－)"
@@ -321,7 +321,7 @@ def append_history(records: list[dict]) -> None:
             with path.open("r", encoding="utf-8-sig", newline="") as stream:
                 for row in csv.DictReader(stream):
                     route = _history_value(row, "route")
-                    amount = _history_value(row, "one_way_amount_cny")
+                    amount = _history_value(row, "round_trip_amount_cny")
                     if route and amount:
                         previous_by_route[route] = int(amount)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -335,8 +335,9 @@ def append_history(records: list[dict]) -> None:
                 for amount in record["amounts"]:
                     route = amount["route"]
                     current = int(amount["one_way_amount_cny"])
+                    current_round_trip = int(amount["round_trip_amount_cny"])
                     previous = previous_by_route.get(route)
-                    change = "" if previous is None or current == previous else f"{current - previous:+d}"
+                    change = "" if previous is None or current_round_trip == previous else f"{current_round_trip - previous:+d}"
                     output = {
                         "record_id": record["id"],
                         "recorded_at": record["recorded_at"],
@@ -345,12 +346,12 @@ def append_history(records: list[dict]) -> None:
                         "effective_end": record["effective_end"],
                         "route": route,
                         "one_way_amount_cny": current,
-                        "round_trip_amount_cny": amount["round_trip_amount_cny"],
+                        "round_trip_amount_cny": current_round_trip,
                         "currency": record["currency"],
                         "change_vs_previous_cny": change,
                     }
                     writer.writerow({HISTORY_HEADERS[key]: value for key, value in output.items()})
-                    previous_by_route[route] = current
+                    previous_by_route[route] = current_round_trip
 
 def load_state() -> dict:
     if STATE_FILE.exists():

@@ -32,14 +32,14 @@ def test_build_is_repeatable_and_does_not_write_source_files():
 
 def test_effective_boundaries_next_period_and_revision_deduplication():
     def row(start,end,recorded,amount='1'):
-        return {'适用开始日期':start,'适用结束日期':end,'记录时间（北京时间）':recorded,'单程燃油附加费（人民币）':amount}
+        return {'适用开始日期':start,'适用结束日期':end,'记录时间':recorded,'单程燃油附加费':amount}
     rows=[row('2026-09-01','2026-09-30','2026-08-20'),row('2026-10-01','2026-10-25','2026-09-20'),
           row('2026-11-01','2026-12-31','2026-10-20','2'),row('2026-11-01','2026-12-31','2026-10-25','3'),
           row('2027-01-01','2027-02-28','2026-10-25')]
     output=focus.mark_rows(rows,TODAY)
     assert len(output)==4
     assert output[1]['重点标记']=='🟦 下一期'
-    assert output[1]['单程燃油附加费（人民币）']=='3'
+    assert output[1]['单程燃油附加费']=='3'
     assert output[2]['重点标记']=='🟨 当前生效'
     assert output[0]['重点标记']==output[3]['重点标记']==''
     assert not any(row['重点标记']=='🟨 当前生效' for row in focus.mark_rows(rows,date(2026,10,26)))
@@ -67,6 +67,6 @@ def test_monitor_appends_to_archive_and_focus_rebuild_does_not_recreate_duplicat
     assert sorted(path.name for path in focused.iterdir()) == ['01_NH.csv','02_JL.csv']
     with (focused/'01_NH.csv').open(encoding='utf-8-sig',newline='') as handle:
         rows=list(csv.DictReader(handle))
-    assert len(rows)==1 and rows[0]['单程燃油附加费（人民币）']=='350'
+    assert len(rows)==1 and rows[0]['单程燃油附加费']=='350'
     with archives['NH'].open(encoding='utf-8-sig',newline='') as handle:
         assert len(list(csv.DictReader(handle)))==2

@@ -24,6 +24,12 @@ def mark_rows(rows, today):
         if previous is None or row.get('记录时间', '') >= previous.get('记录时间', ''):
             latest[key] = dict(row)
     rows = list(latest.values())
+    initial = {}
+    for row in sorted(rows, key=lambda row: (row.get('适用开始日期', ''), row.get('适用结束日期', ''))):
+        start, end = day(row.get('适用开始日期')), day(row.get('适用结束日期'))
+        if start and end and start <= end:
+            key = (row.get('航线'), row.get('币种'))
+            initial.setdefault(key, number(row.get('往返燃油附加费')))
     future = [day(row.get('适用开始日期')) for row in rows
               if day(row.get('适用开始日期')) and day(row.get('适用结束日期'))
               and day(row['适用开始日期']) > today
@@ -38,6 +44,12 @@ def mark_rows(rows, today):
             elif start == next_start:
                 label = '🟦 下一期'
         row['重点标记'] = label
+        baseline = initial.get((row.get('航线'), row.get('币种')))
+        amount = number(row.get('往返燃油附加费'))
+        row['往返较最初涨跌'] = ''
+        if start and end and start <= end and baseline is not None and amount is not None:
+            difference = amount - baseline
+            row['往返较最初涨跌'] = ('+' if difference > 0 else '') + format(difference if difference else 0, 'f')
     return sorted(rows, key=lambda row: (row.get('适用开始日期', ''), row.get('记录时间', '')), reverse=True)
 
 
@@ -45,7 +57,7 @@ def build(root, today):
     result = {}
     for rank, airline in enumerate(('NH', 'JL'), 1):
         headers, rows = read_table(project_path(root, f'csv/03_不常看/{airline}.csv'))
-        result[f'csv/01_重点关注/0{rank}_{airline}.csv'] = table(['重点标记'] + headers, mark_rows(rows, today))
+        result[f'csv/01_重点关注/0{rank}_{airline}.csv'] = table(['重点标记'] + headers + ['往返较最初涨跌'], mark_rows(rows, today))
     return result
 
 

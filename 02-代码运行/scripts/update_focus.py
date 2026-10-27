@@ -49,7 +49,7 @@ def mark_rows(rows, today):
         row['往返较最初涨跌'] = ''
         if start and end and start <= end and baseline is not None and amount is not None:
             difference = amount - baseline
-            row['往返较最初涨跌'] = ('+' if difference > 0 else '') + format(difference if difference else 0, 'f')
+            row['往返较最初涨跌'] = '0' if difference == 0 else ('+' if difference > 0 else '') + format(difference, 'f')
     return sorted(rows, key=lambda row: (row.get('适用开始日期', ''), row.get('记录时间', '')), reverse=True)
 
 

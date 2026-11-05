@@ -1,10 +1,9 @@
 {
-  "pending": {
+  "pending": {},
+  "delivered": {
     "b5dbccfa9d732ae0d42664e6cf0d8b77f07245aff6fc321da84b1fc8aa06353b": {
-      "title": "NH/JL 燃油附加费发现新记录",
-      "body": "# 2026-10 轮次发现新的燃油附加费记录\n\n## JAL（日本航空）\n\n适用期：2026-10-16 至 2026-10-31\n| 航线 | 燃油单程价格 | 燃油往返价格 |\n|---|---:|---:|\n| 中国大陆-日本（中国大陆始发） | CNY 525 | CNY 1,050 |\n\n来源：https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail_overseas.html\n\n## JAL（日本航空）\n\n适用期：2026-11-01 至 2026-12-31\n| 航线 | 燃油单程价格 | 燃油往返价格 |\n|---|---:|---:|\n| 中国大陆-日本（中国大陆始发） | CNY 525 | CNY 1,050 |\n\n来源：https://www.jal.co.jp/jp/ja/inter/fare/fuel/detail_overseas.html\n",
-      "queued_at": "2026-11-05T09:54:40+00:00"
+      "url": "https://github.com/ruoxueqaq-gif/fuel-surcharge-monitor/issues/4",
+      "delivered_at": "2026-11-05T09:54:43+00:00"
     }
-  },
-  "delivered": {}
+  }
 }

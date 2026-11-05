@@ -2,10 +2,16 @@
   "cycles": {
     "2026-10": {
       "airlines": {
+        "JL": {
+          "fetch_mode": "mirror",
+          "found": true,
+          "found_at": "2026-11-05",
+          "record_id": "669312fc1efc059b"
+        },
         "NH": {
           "fetch_mode": "official",
           "found": true,
-          "found_at": "2026-10-20",
+          "found_at": "2026-11-05",
           "record_id": "961542733b9485cf"
         }
       }
@@ -14,9 +20,14 @@
   "schema_version": 1,
   "source_health": {
     "JL": {
-      "checked_at": "2026-11-02",
-      "last_successful_fetch": "",
-      "status": "error"
+      "checked_at": "2026-11-05",
+      "last_successful_fetch": "2026-11-05",
+      "status": "ok"
+    },
+    "NH": {
+      "checked_at": "2026-11-05",
+      "last_successful_fetch": "2026-11-05",
+      "status": "ok"
     }
   }
 }

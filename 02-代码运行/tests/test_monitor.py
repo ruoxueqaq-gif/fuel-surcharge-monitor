@@ -17,7 +17,11 @@ def test_candidate_dates_and_cycles():
     assert is_candidate_day(date(2026, 10, 20))
     assert is_candidate_day(date(2026, 10, 25))
     assert is_candidate_day(date(2026, 11, 2))
-    assert not is_candidate_day(date(2026, 10, 21))
+    assert is_candidate_day(date(2026, 10, 21))
+    assert is_candidate_day(date(2026, 11, 5))
+    assert not is_candidate_day(date(2026, 12, 19))
+    assert cycle_for_day(date(2026, 11, 30)) == Cycle(2026, 10)
+    assert cycle_for_day(date(2027, 1, 31)) == Cycle(2026, 12)
     assert cycle_for_day(date(2026, 10, 20)) == Cycle(2026, 10)
     assert cycle_for_day(date(2026, 11, 2)) == Cycle(2026, 10)
     assert cycle_for_day(date(2027, 1, 2)) == Cycle(2026, 12)
@@ -148,3 +152,26 @@ def test_history_csv_omits_unit_and_source_and_tracks_change(tmp_path, monkeypat
     assert loaded[0]["recorded_at"] == recorded_at
     assert loaded[0]["unit"] == "每位旅客、每航段、单程"
     assert loaded[0]["source_url"] == monitor.SOURCES["NH"]
+
+
+def test_fetch_retries_unparseable_mirror(monkeypatch):
+    class Response:
+        def __init__(self, body):
+            self.text = body
+
+        def raise_for_status(self):
+            pass
+
+    valid = "Title: JAL\n### 2026年11月1日から12月31日発券分まで\n東アジア発旅程はCNY525です。" + " " * 800
+    bodies = iter(["Access Denied" + " " * 800, "unparseable " * 100, valid])
+    urls = []
+
+    def get(url, **kwargs):
+        urls.append(url)
+        return Response(next(bodies))
+
+    monkeypatch.setattr(monitor.requests, "get", get)
+    body, mode = monitor.fetch(monitor.SOURCES["JL"], "JL")
+    assert body == valid
+    assert mode == "mirror_https"
+    assert len(urls) == 3

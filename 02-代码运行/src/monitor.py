@@ -79,19 +79,15 @@ def cycle_for_day(day: date) -> Cycle:
     """Return the announcement cycle for a scheduled or manual run."""
     if day.month % 2 == 0:
         return Cycle(day.year, day.month)
-    if day.day <= 2:
+    if day.month % 2 == 1:
         if day.month == 1:
             return Cycle(day.year - 1, 12)
         return Cycle(day.year, day.month - 1)
-    if day.month == 12:
-        return Cycle(day.year + 1, 2)
-    return Cycle(day.year, day.month + 1)
+    return Cycle(day.year, day.month)
 
 
 def is_candidate_day(day: date) -> bool:
-    return (day.month % 2 == 0 and day.day in (20, 25)) or (
-        day.month % 2 == 1 and day.day == 2
-    )
+    return day.month % 2 == 1 or day.day >= 20
 
 
 def clean(text: str) -> str:
@@ -121,21 +117,34 @@ def announced_for_period(updated_at: str | None, effective_start: str) -> str | 
     return updated_at
 
 
-def fetch(url: str) -> tuple[str, str]:
+def fetch(url: str, airline: str | None = None) -> tuple[str, str]:
     """Fetch an official page, falling back to a text mirror on bot blocking."""
     headers = {
         "User-Agent": "Mozilla/5.0 (compatible; fuel-surcharge-monitor/1.0; +https://github.com/ruoxueqaq-gif/fuel-surcharge-monitor)",
         "Accept-Language": "ja,en;q=0.8",
     }
     errors: list[str] = []
-    candidates = [(url, "official"), (f"https://r.jina.ai/http://{url.split('://', 1)[1]}", "mirror")]
+    mirror_path = url.split('://', 1)[1]
+    candidates = [
+        (url, "official"),
+        (f"https://r.jina.ai/http://{mirror_path}", "mirror"),
+        (f"https://r.jina.ai/https://{mirror_path}", "mirror_https"),
+    ]
+    candidates += [(candidate, mode + "_fresh") for candidate, mode in candidates[1:]]
     for candidate, mode in candidates:
         try:
-            response = requests.get(candidate, headers=headers, timeout=45)
+            request_headers = dict(headers)
+            if mode.endswith("_fresh"):
+                request_headers["X-No-Cache"] = "true"
+            response = requests.get(candidate, headers=request_headers, timeout=45)
             response.raise_for_status()
             body = response.text
             if "Access Denied" in body or len(body) < 800:
                 raise RuntimeError("page returned an access-denied or empty response")
+            if airline is not None:
+                parser = parse_markdown_periods if body.lstrip().startswith(("#", "Title:")) else parse_html_periods
+                if not parser(body, airline, url):
+                    raise RuntimeError("来源正文未识别到中国大陆始发人民币金额，尝试备用来源")
             return body, mode
         except Exception as exc:  # continue to the documented fallback
             errors.append(f"{mode}: {exc}")
@@ -439,7 +448,7 @@ def main() -> int:
     errors: list[str] = []
     for airline in pending:
         try:
-            body, fetch_mode = fetch(SOURCES[airline])
+            body, fetch_mode = fetch(SOURCES[airline], airline)
             if body.lstrip().startswith(("#", "Title:")):
                 found = parse_markdown_periods(body, airline, SOURCES[airline])
             else:
@@ -466,7 +475,7 @@ def main() -> int:
             message = f"{airline}: {exc}"
             previous = state.setdefault("source_health", {}).get(airline, {})
             state["source_health"][airline] = {"status": "error", "checked_at": today.isoformat(),
-                "last_successful_fetch": previous.get("last_successful_fetch", "")}
+                "last_successful_fetch": previous.get("last_successful_fetch", ""), "error": str(exc)}
             errors.append(message)
             print(f"::warning::{message}")
 
@@ -487,7 +496,7 @@ def main() -> int:
         CHANGE_FILE.unlink()
 
     print(f"新增 {len(new_records)} 条期次记录；待后续检查：{', '.join(errors) if errors else '无抓取错误'}")
-    return 0
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":

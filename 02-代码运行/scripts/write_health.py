@@ -77,7 +77,7 @@ def build_status(name, now):
         status['last_successful_fetch'] = max((r.get('last_successful_fetch', '') for r in sources.values()), default='')
         status['source_failures'] = sum(r.get('status') == 'error' for r in sources.values()) if sources else None
         status['valid_results'] = sum(1 for _ in csv_rows('csv/01_重点关注/*.csv'))
-        status['next_check'] = '偶数月20、25日及下一奇数月2日；已完成航司自动跳过'
+        status['next_check'] = '偶数月20日起及下一奇数月每天北京时间08:20重试；已完成航司自动跳过'
     elif name in {'akita-hotel-monitor','akita-omagari-2027-monitor'}:
         status['last_data_check'] = state.get('last_attempt_check') or state.get('last_effective_check', '')
         status['last_successful_fetch'] = state.get('last_effective_check', '')

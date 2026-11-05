@@ -29,3 +29,5 @@ jobs:
       - name: Validate
         run: |
           python -m pytest -q
+      - name: Render monitor status from saved data
+        run: python scripts/write_health.py

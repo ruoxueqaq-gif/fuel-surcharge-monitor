@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["01-CSV/**", "02-代码运行/data/**", "02-代码运行/config/**", "02-代码运行/config.yaml", "02-代码运行/preference_config.yaml", "02-代码运行/scripts/**", "02-代码运行/src/review_queue.py"]
+    paths: ["01-CSV/**", "02-代码运行/data/**", "02-代码运行/scripts/**", "02-代码运行/src/**", ".github/workflows/focus.yml"]
 permissions:
   contents: write
 concurrency:

@@ -1,12 +1,12 @@
 {
   "repository": "fuel-surcharge-monitor",
-  "page_generated_at": "2026-11-02T06:26:31+00:00",
+  "page_generated_at": "2026-11-05T09:54:44+00:00",
   "workflow_outcome": "success",
-  "last_data_check": "2026-11-02",
-  "last_successful_fetch": "",
-  "valid_results": 12,
-  "next_check": "偶数月20、25日及下一奇数月2日；已完成航司自动跳过",
+  "last_data_check": "2026-11-05",
+  "last_successful_fetch": "2026-11-05",
+  "valid_results": 14,
+  "next_check": "偶数月20日起及下一奇数月每天北京时间08:20重试；已完成航司自动跳过",
   "notes": [],
-  "source_failures": 1,
-  "pending_notifications": null
+  "source_failures": 0,
+  "pending_notifications": 0
 }

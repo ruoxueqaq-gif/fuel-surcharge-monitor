@@ -1,6 +1,6 @@
-# fuel-surcharge-monitor 监控状态
+# air-fuel-surcharge-monitor 监控状态
 
-页面生成时间：2026-11-12T07:18:46+00:00
+页面生成时间：2026-11-13T06:52:24+00:00
 
 - 最近实际查询：2026-11-05
 - 最近成功获取来源数据：2026-11-05
@@ -12,5 +12,5 @@
 
 工作流执行、来源请求成功和有效结果是不同状态。页面生成时间不代表完成了实际查询；跳过查询时保留上次来源时间。
 
-[Actions运行记录](https://github.com/ruoxueqaq-gif/fuel-surcharge-monitor/actions) · [查询配置与说明](../README.md)
+[Actions运行记录](https://github.com/ruoxueqaq-gif/air-fuel-surcharge-monitor/actions) · [查询配置与说明](../README.md)
 
